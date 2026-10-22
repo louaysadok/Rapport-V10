@@ -53,19 +53,19 @@ jobs:
             sleep 15
           done
 
-      - name: Build debug APK
+      - name: Build debug APK (capture full output)
         run: |
-          flutter build apk --debug
-          echo "=== FLUTTER EXIT CODE: $? ==="
+          flutter build apk --debug > /tmp/build_output.txt 2>&1
+          EXIT_CODE=$?
+          echo "=== FLUTTER EXIT CODE: $EXIT_CODE ==="
+          echo "=== BUILD OUTPUT ==="
+          cat /tmp/build_output.txt
+          exit $EXIT_CODE
 
-      - name: Find all APK/AAB files (always)
+      - name: Upload build output log (always)
         if: always()
-        run: |
-          echo "=== All files under workspace ==="
-          find . -type f 2>/dev/null | head -300 || echo "No files"
-          echo "=== APK files anywhere ==="
-          find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No APK files"
-          echo "=== AAB files anywhere ==="
-          find / -name "*.aab" -type f 2>/dev/null | head -10 || echo "No AAB files"
-          echo "=== All files modified recently ==="
-          find /home -type f -newermt "10 minutes ago" 2>/dev/null | head -50 || echo "No recent files in /home"
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output-log
+          path: /tmp/build_output.txt
+          retention-days: 30
