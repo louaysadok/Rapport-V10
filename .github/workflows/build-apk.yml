@@ -68,10 +68,27 @@ jobs:
             sleep 15
           done
 
-      - name: Build debug APK
+      - name: Build debug APK (capture output)
         run: |
-          set -o pipefail
-          flutter build apk --debug --verbose 2>&1 | tee /tmp/build_verbose.log
+          flutter build apk --debug --verbose 2>&1 | tee /tmp/build_output.txt
+          echo "=== BUILD EXIT CODE: $? ==="
+          echo "=== BUILD LOG TAIL ==="
+          tail -80 /tmp/build_output.txt
+
+      - name: List build directory
+        run: |
+          echo "=== Build directory contents ==="
+          find build -type f 2>/dev/null | head -50 || echo "No build directory"
+          echo "=== Any APK files ==="
+          find / -name "*.apk" -type f 2>/dev/null | head -10 || echo "No APK files found"
+
+      - name: Save build output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output-log
+          path: /tmp/build_output.txt
+          retention-days: 30
 
       - name: Find APK file (exhaustive)
         run: |
