@@ -44,6 +44,9 @@ jobs:
       - name: Write Flutter SDK local.properties
         run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
+      - name: Flutter doctor verbose
+        run: flutter doctor -v > /tmp/flutter_doctor.txt 2>&1; echo "DOCTOR_EXIT: $?"; cat /tmp/flutter_doctor.txt
+
       - name: Get dependencies
         run: |
           for i in 1 2 3; do
@@ -53,17 +56,31 @@ jobs:
             sleep 15
           done
 
-      - name: Flutter analyze
+      - name: Dart version
+        run: dart --version
+
+      - name: Flutter analyze (capture output)
         run: |
           flutter analyze > /tmp/analyze_output.txt 2>&1
           echo "=== ANALYZE EXIT CODE: $? ==="
           cat /tmp/analyze_output.txt
+
+      - name: Write analyze output to job summary
+        run: |
+          cat /tmp/analyze_output.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no analyze output)" >> $GITHUB_STEP_SUMMARY
 
       - name: Build debug APK
         run: |
           set -o pipefail
           flutter build apk --debug --stack-trace --verbose 2>&1 | tee /tmp/build_output.txt
           echo "=== FLUTTER EXIT CODE: ${PIPESTATUS[0]} ==="
+
+      - name: Find APK files
+        run: |
+          echo "=== APK search ==="
+          find /home/runner -name "*.apk" -type f 2>/dev/null
+          find /tmp -name "*.apk" -type f 2>/dev/null
+          find $PWD -name "*.apk" -type f 2>/dev/null
 
       - name: Upload build output log (always)
         if: always()
@@ -79,4 +96,12 @@ jobs:
         with:
           name: analyze-output-log
           path: /tmp/analyze_output.txt
+          retention-days: 30
+
+      - name: Upload Flutter doctor log (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-doctor-log
+          path: /tmp/flutter_doctor.txt
           retention-days: 30
