@@ -55,29 +55,17 @@ jobs:
 
       - name: Build debug APK
         run: |
-          flutter build apk --debug 2>&1 | tee /tmp/build_output.txt
-          echo "=== FLUTTER EXIT CODE: ${PIPESTATUS[0]} ==="
-          echo "=== TAIL ==="
-          tail -80 /tmp/build_output.txt
+          flutter build apk --debug
+          echo "=== FLUTTER EXIT CODE: $? ==="
 
-      - name: Find all build outputs (always)
+      - name: Find all APK/AAB files (always)
         if: always()
         run: |
-          echo "=== Files under workspace ==="
-          find . -type f 2>/dev/null | head -200 || echo "No files under workspace"
-          echo "=== APK/AAB files anywhere ==="
+          echo "=== All files under workspace ==="
+          find . -type f 2>/dev/null | head -300 || echo "No files"
+          echo "=== APK files anywhere ==="
           find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No APK files"
+          echo "=== AAB files anywhere ==="
           find / -name "*.aab" -type f 2>/dev/null | head -10 || echo "No AAB files"
-          echo "=== Files under .dart_tool ==="
-          find .dart_tool -type f 2>/dev/null | head -20 || echo "No .dart_tool files"
-          echo "=== Flutter build cache ==="
-          ls -la ~/.flutter/ 2>/dev/null || echo "No .flutter dir"
-          find ~/.flutter -name "*.apk" -type f 2>/dev/null | head -10 || echo "No APK in .flutter"
-
-      - name: Upload build output log (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output-log
-          path: /tmp/build_output.txt
-          retention-days: 30
+          echo "=== All files modified recently ==="
+          find /home -type f -newermt "10 minutes ago" 2>/dev/null | head -50 || echo "No recent files in /home"
