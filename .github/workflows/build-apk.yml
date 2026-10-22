@@ -44,7 +44,10 @@ jobs:
         run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
       - name: Flutter doctor verbose
-        run: flutter doctor -v > /tmp/flutter_doctor.txt 2>&1; echo "DOCTOR_EXIT: $?"; cat /tmp/flutter_doctor.txt || true
+        run: |
+          flutter doctor -v > /tmp/flutter_doctor.txt 2>&1 || true
+          echo "DOCTOR_EXIT: $?"
+          cat /tmp/flutter_doctor.txt || true
 
       - name: Get dependencies
         run: |
