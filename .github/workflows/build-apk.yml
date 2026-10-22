@@ -85,10 +85,11 @@ jobs:
 
       - name: Copy APK to known location
         run: |
-          # Try any .apk file on the filesystem
+          echo "=== All APK files found ==="
+          find / -name "*.apk" -type f 2>/dev/null | head -20
           APK_PATH=$(find / -name "*.apk" -type f 2>/dev/null | head -1)
           if [ -n "$APK_PATH" ]; then
-            echo "Found APK at: $APK_PATH"
+            echo "Copying APK from: $APK_PATH"
             cp "$APK_PATH" ./rapport-plus-debug.apk
             ls -la ./rapport-plus-debug.apk
           else
