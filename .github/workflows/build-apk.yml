@@ -79,13 +79,26 @@ jobs:
       - name: Copy APK to known location (always)
         if: always()
         run: |
-          APK_PATH=$(find / -name "*.apk" -type f 2>/dev/null | head -1)
+          # Check known Flutter output paths
+          for path in \
+            build/app/outputs/flutter-apk/app-debug.apk \
+            build/app/outputs/apk/debug/app-debug.apk \
+            build/app/outputs/apk/app-debug.apk; do
+            if [ -f "$path" ]; then
+              echo "Found APK at: $path"
+              cp "$path" ./rapport-plus-debug.apk
+              ls -la ./rapport-plus-debug.apk
+              exit 0
+            fi
+          done
+          # Fallback: search build directory
+          APK_PATH=$(find build -name "*.apk" -type f 2>/dev/null | head -1)
           if [ -n "$APK_PATH" ]; then
-            echo "Copying APK from: $APK_PATH"
+            echo "Found APK at: $APK_PATH"
             cp "$APK_PATH" ./rapport-plus-debug.apk
             ls -la ./rapport-plus-debug.apk
           else
-            echo "No APK file found anywhere on filesystem"
+            echo "No APK file found in build directory"
           fi
 
       - name: Upload APK artifact
