@@ -1,0 +1,40 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+pubspec.lock
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+android/keystore.jks
+android/key.properties
+android/local.properties
+android/app/src/main/generated
+
+# Gradle
+.gradle/
+/captures/
+android/gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iws
+*.ipr
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+
+# Dart generate (drift database.g.dart is hand-maintained and committed)
+*.freezed.dart
+
+# OOM / large artifacts
+*.apk
+*.aab
+*.zip
