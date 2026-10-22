@@ -66,7 +66,11 @@ jobs:
           echo "=== Build directory tree ==="
           find build -type f 2>/dev/null | head -100 || echo "No build directory"
           echo "=== All APK files on filesystem ==="
-          find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No APK files found"
+          find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No APK files found anywhere"
+          echo "=== Flutter APK output directories ==="
+          find . -type d -name "flutter-apk" 2>/dev/null | head -10 || echo "No flutter-apk directory found"
+          echo "=== Recent files in /tmp ==="
+          find /tmp -type f -newermt "1 hour ago" 2>/dev/null | head -20 || echo "No recent files in /tmp"
 
       - name: Upload build output log (always)
         if: always()
@@ -76,7 +80,7 @@ jobs:
           path: /tmp/build_output.txt
           retention-days: 30
 
-      - name: Upload build directory artifact
+      - name: Upload build directory artifact (always)
         if: always()
         uses: actions/upload-artifact@v4
         with:
