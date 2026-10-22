@@ -1,0 +1,105 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build debug + release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java (Temurin 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Flutter 3.24.5
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.24.5
+          channel: stable
+
+      - name: Setup Android SDK
+        run: |
+          set -e
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          curl -sL --retry 3 --fail https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline.zip
+          unzip -q /tmp/cmdline.zip -d $HOME/android-sdk/cmdline-tools
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-34" "build-tools;34.0.0" >/dev/null 2>&1
+
+      - name: Accept Android SDK licenses
+        run: yes | flutter doctor --android-licenses
+
+      - name: Write Flutter SDK local.properties
+        run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+
+      - name: Diagnostics
+        run: |
+          echo "=== Dart version ==="
+          dart --version
+          echo "=== Flutter version ==="
+          flutter --version
+          echo "=== Flutter doctor ==="
+          flutter doctor -v
+          echo "=== Network test pub.dev ==="
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://pub.dev || echo "000")
+          echo "pub.dev HTTP: $code"
+          echo "=== Network test googleapis ==="
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://apis.google.com || echo "000")
+          echo "googleapis HTTP: $code"
+
+      - name: Get dependencies
+        run: |
+          for i in 1 2 3; do
+            echo "flutter pub get attempt $i"
+            flutter pub get && break
+            echo "Attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
+
+      - name: Build debug APK (capture output)
+        run: |
+          flutter build apk --debug > /tmp/build_output.txt 2>&1 || true
+          echo "=== BUILD OUTPUT (last 80 lines) ==="
+          tail -80 /tmp/build_output.txt
+
+      - name: Find APK file (exhaustive)
+        run: |
+          echo "=== All files in build/ ==="
+          find build -type f 2>/dev/null | head -50 || echo "No build dir"
+          echo "=== All .apk files on filesystem ==="
+          find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No .apk files found"
+          echo "=== All files modified recently in build/ ==="
+          find build -newer /tmp/build_output.txt -type f 2>/dev/null | head -30 || echo "No recent files"
+
+      - name: Copy APK to known location
+        run: |
+          # Try any .apk file on the filesystem
+          APK_PATH=$(find / -name "*.apk" -type f 2>/dev/null | head -1)
+          if [ -n "$APK_PATH" ]; then
+            echo "Found APK at: $APK_PATH"
+            cp "$APK_PATH" ./rapport-plus-debug.apk
+            ls -la ./rapport-plus-debug.apk
+          else
+            echo "ERROR: No .apk file found anywhere on filesystem"
+            exit 1
+          fi
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-plus-apk-debug
+          path: rapport-plus-debug.apk
+          retention-days: 30
+          if-no-files-found: error
