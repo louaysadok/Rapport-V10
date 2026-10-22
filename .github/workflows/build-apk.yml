@@ -55,9 +55,10 @@ jobs:
 
       - name: Build debug APK
         run: |
-          set -o pipefail
           flutter build apk --debug --verbose 2>&1 | tee /tmp/build_output.txt
           echo "=== FLUTTER EXIT CODE: ${PIPESTATUS[0]} ==="
+          echo "=== TAIL OF BUILD OUTPUT ==="
+          tail -60 /tmp/build_output.txt
 
       - name: List build directory (always)
         if: always()
