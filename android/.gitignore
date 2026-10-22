@@ -1,9 +1,0 @@
-/.gradle/
-/captures/
-gradle-wrapper.jar
-/local.properties
-GeneratedPluginRegistrant.java
-key.properties
-**/*.keystore
-**/*.jks
-build/

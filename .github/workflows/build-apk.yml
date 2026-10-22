@@ -43,78 +43,28 @@ jobs:
       - name: Write Flutter SDK local.properties
         run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
-      - name: Flutter doctor verbose
-        run: |
-          flutter doctor -v > /tmp/flutter_doctor.txt 2>&1 || true
-          echo "DOCTOR_EXIT: $?"
-          cat /tmp/flutter_doctor.txt || true
-
       - name: Get dependencies
-        run: |
-          for i in 1 2 3; do
-            echo "flutter pub get attempt $i"
-            flutter pub get && break
-            echo "Attempt $i failed, retrying in 15s..."
-            sleep 15
-          done
+        run: flutter pub get
 
-      - name: Dart version
-        run: dart --version
-
-      - name: Flutter analyze (non-blocking, capture output)
-        run: |
-          flutter analyze > /tmp/analyze_output.txt 2>&1 || true
-          echo "=== ANALYZE EXIT CODE: $? ==="
-          cat /tmp/analyze_output.txt || true
-
-      - name: Write analyze output to job summary
-        run: |
-          cat /tmp/analyze_output.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no analyze output)" >> $GITHUB_STEP_SUMMARY || true
+      - name: Flutter analyze (non-blocking)
+        run: flutter analyze > /tmp/analyze_output.txt 2>&1 || true
 
       - name: Build debug APK
-        run: |
-          set -o pipefail
-          flutter build apk --debug --stack-trace --verbose 2>&1 | tee /tmp/build_output.txt
-          echo "=== FLUTTER EXIT CODE: ${PIPESTATUS[0]} ==="
+        run: flutter build apk --debug
 
-      - name: Find APK files (broad search)
+      - name: Find APK files
         run: |
-          echo "=== APK search ==="
+          echo "=== APK locations ==="
           find / -name "*.apk" -type f 2>/dev/null || true
-          echo "=== Flutter apk dir ==="
+          echo "=== Flutter output dir ==="
           ls -la build/app/outputs/flutter-apk/ 2>/dev/null || true
 
-      - name: Upload debug APK artifact (if found)
+      - name: Upload debug APK artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: rapport-plus-debug-apk
           path: |
             build/app/outputs/flutter-apk/*.apk
-            /tmp/**/*.apk
           retention-days: 30
           if-no-files-found: warn
-
-      - name: Upload build output log (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output-log
-          path: /tmp/build_output.txt
-          retention-days: 30
-
-      - name: Upload analyze output log (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: analyze-output-log
-          path: /tmp/analyze_output.txt
-          retention-days: 30
-
-      - name: Upload Flutter doctor log (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-doctor-log
-          path: /tmp/flutter_doctor.txt
-          retention-days: 30

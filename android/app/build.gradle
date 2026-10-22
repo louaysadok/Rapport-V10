@@ -1,42 +1,50 @@
-plugins {
-    id "com.android.application"
-    id "org.jetbrains.kotlin.android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id "dev.flutter.flutter-gradle-plugin"
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
 }
 
+def flutterSdkPath = localProperties.getProperty('flutter.sdk')
+def flutterRoot = flutterSdkPath != null ? file(flutterSdkPath) : null
+
+if (flutterRoot == null) {
+    throw new GradleException("Flutter SDK not found. Define local.properties with flutter.sdk=...")
+}
+
+apply from: "$flutterRoot/packages/flutter_tools/gradle/app.gradle"
+
 android {
-    namespace = "com.louaysadok.rapportplus"
-    compileSdk = flutter.compileSdkVersion
+    compileSdkVersion 34
+
+    namespace "com.louaysadok.rapportplus"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
     }
 
     defaultConfig {
         applicationId "com.louaysadok.rapportplus"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0.0"
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.debug
+            minifyEnabled false
         }
     }
-}
-
-flutter {
-    source = ".."
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

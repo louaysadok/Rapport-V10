@@ -1,30 +1,24 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'app.dart';
-import 'app_state.dart';
-import 'routes.dart';
+void main() {
+  runApp(const RapportApp());
+}
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+class RapportApp extends StatelessWidget {
+  const RapportApp({super.key});
 
-  final prefs = await SharedPreferences.getInstance();
-  appDatabase = await openAppDatabase();
-  await appDatabase.init();
-
-  // Notifications locales : rappel quotidien à 18:00 heure locale.
-  await notificationService.init();
-  await notificationService.scheduleDailyReminder();
-
-  runApp(
-    ProviderScope(
-      overrides: [
-        prefsProvider.overrideWithValue(prefs),
-      ],
-      child: const RapportApp(),
-    ),
-  );
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Rapport+',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0A1931)),
+        useMaterial3: true,
+      ),
+      home: const Scaffold(
+        body: Center(child: Text('Rapport+ — en construction')),
+      ),
+    );
+  }
 }
