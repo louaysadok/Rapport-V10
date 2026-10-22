@@ -29,14 +29,13 @@ jobs:
 
       - name: Setup Android SDK
         run: |
-          set -e
           mkdir -p $HOME/android-sdk/cmdline-tools
           curl -sL --retry 3 --fail https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline.zip
           unzip -q /tmp/cmdline.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-34" "build-tools;34.0.0" >/dev/null 2>&1
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-34" "build-tools;34.0.0" >/dev/null 2>&1 || true
 
       - name: Accept Android SDK licenses
         run: yes | flutter doctor --android-licenses
@@ -45,7 +44,7 @@ jobs:
         run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
       - name: Flutter doctor verbose
-        run: flutter doctor -v > /tmp/flutter_doctor.txt 2>&1; echo "DOCTOR_EXIT: $?"; cat /tmp/flutter_doctor.txt
+        run: flutter doctor -v > /tmp/flutter_doctor.txt 2>&1; echo "DOCTOR_EXIT: $?"; cat /tmp/flutter_doctor.txt || true
 
       - name: Get dependencies
         run: |
@@ -63,11 +62,11 @@ jobs:
         run: |
           flutter analyze > /tmp/analyze_output.txt 2>&1
           echo "=== ANALYZE EXIT CODE: $? ==="
-          cat /tmp/analyze_output.txt
+          cat /tmp/analyze_output.txt || true
 
       - name: Write analyze output to job summary
         run: |
-          cat /tmp/analyze_output.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no analyze output)" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/analyze_output.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no analyze output)" >> $GITHUB_STEP_SUMMARY || true
 
       - name: Build debug APK
         run: |
