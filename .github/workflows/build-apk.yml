@@ -54,7 +54,10 @@ jobs:
           done
 
       - name: Flutter analyze
-        run: flutter analyze
+        run: |
+          flutter analyze > /tmp/analyze_output.txt 2>&1
+          echo "=== ANALYZE EXIT CODE: $? ==="
+          cat /tmp/analyze_output.txt
 
       - name: Build debug APK
         run: |
@@ -68,4 +71,12 @@ jobs:
         with:
           name: build-output-log
           path: /tmp/build_output.txt
+          retention-days: 30
+
+      - name: Upload analyze output log (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analyze-output-log
+          path: /tmp/analyze_output.txt
           retention-days: 30
