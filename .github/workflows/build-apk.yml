@@ -70,7 +70,7 @@ jobs:
 
       - name: Build debug APK (capture output)
         run: |
-          flutter build apk --debug > /tmp/build_output.txt 2>&1 || true
+          flutter build apk --debug > /tmp/build_output.txt 2>&1
           echo "=== BUILD OUTPUT (last 80 lines) ==="
           tail -80 /tmp/build_output.txt
 
