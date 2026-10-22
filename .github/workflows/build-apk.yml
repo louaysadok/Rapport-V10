@@ -61,9 +61,9 @@ jobs:
       - name: Dart version
         run: dart --version
 
-      - name: Flutter analyze (capture output)
+      - name: Flutter analyze (non-blocking, capture output)
         run: |
-          flutter analyze > /tmp/analyze_output.txt 2>&1
+          flutter analyze > /tmp/analyze_output.txt 2>&1 || true
           echo "=== ANALYZE EXIT CODE: $? ==="
           cat /tmp/analyze_output.txt || true
 
@@ -77,12 +77,23 @@ jobs:
           flutter build apk --debug --stack-trace --verbose 2>&1 | tee /tmp/build_output.txt
           echo "=== FLUTTER EXIT CODE: ${PIPESTATUS[0]} ==="
 
-      - name: Find APK files
+      - name: Find APK files (broad search)
         run: |
           echo "=== APK search ==="
-          find /home/runner -name "*.apk" -type f 2>/dev/null
-          find /tmp -name "*.apk" -type f 2>/dev/null
-          find $PWD -name "*.apk" -type f 2>/dev/null
+          find / -name "*.apk" -type f 2>/dev/null || true
+          echo "=== Flutter apk dir ==="
+          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || true
+
+      - name: Upload debug APK artifact (if found)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-plus-debug-apk
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            /tmp/**/*.apk
+          retention-days: 30
+          if-no-files-found: warn
 
       - name: Upload build output log (always)
         if: always()

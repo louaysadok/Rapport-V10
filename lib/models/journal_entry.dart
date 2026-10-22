@@ -1,4 +1,4 @@
-/import 'dart:convert';
+import 'dart:convert';
 
 // Une entrée de journal de bord (une entrée par jour et par stage).
 class JournalEntry {
