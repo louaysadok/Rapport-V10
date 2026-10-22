@@ -70,7 +70,8 @@ jobs:
 
       - name: Build debug APK
         run: |
-          flutter build apk --debug
+          set -o pipefail
+          flutter build apk --debug --verbose 2>&1 | tee /tmp/build_verbose.log
 
       - name: Find APK file (exhaustive)
         run: |
