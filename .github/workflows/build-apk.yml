@@ -68,11 +68,9 @@ jobs:
             sleep 15
           done
 
-      - name: Build debug APK (capture output)
+      - name: Build debug APK
         run: |
-          flutter build apk --debug > /tmp/build_output.txt 2>&1
-          echo "=== BUILD OUTPUT (last 80 lines) ==="
-          tail -80 /tmp/build_output.txt
+          flutter build apk --debug
 
       - name: Find APK file (exhaustive)
         run: |
