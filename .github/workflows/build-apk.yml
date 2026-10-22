@@ -53,14 +53,14 @@ jobs:
             sleep 15
           done
 
-      - name: Build debug APK (capture full output)
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Build debug APK
         run: |
-          flutter build apk --debug > /tmp/build_output.txt 2>&1
-          EXIT_CODE=$?
-          echo "=== FLUTTER EXIT CODE: $EXIT_CODE ==="
-          echo "=== BUILD OUTPUT ==="
-          cat /tmp/build_output.txt
-          exit $EXIT_CODE
+          set -o pipefail
+          flutter build apk --debug --stack-trace --verbose 2>&1 | tee /tmp/build_output.txt
+          echo "=== FLUTTER EXIT CODE: ${PIPESTATUS[0]} ==="
 
       - name: Upload build output log (always)
         if: always()
