@@ -55,22 +55,24 @@ jobs:
 
       - name: Build debug APK
         run: |
-          flutter build apk --debug --verbose 2>&1 | tee /tmp/build_output.txt
+          flutter build apk --debug 2>&1 | tee /tmp/build_output.txt
           echo "=== FLUTTER EXIT CODE: ${PIPESTATUS[0]} ==="
-          echo "=== TAIL OF BUILD OUTPUT ==="
-          tail -60 /tmp/build_output.txt
+          echo "=== TAIL ==="
+          tail -80 /tmp/build_output.txt
 
-      - name: List build directory (always)
+      - name: Find all build outputs (always)
         if: always()
         run: |
-          echo "=== Build directory tree ==="
-          find build -type f 2>/dev/null | head -100 || echo "No build directory"
-          echo "=== All APK files on filesystem ==="
-          find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No APK files found anywhere"
-          echo "=== Flutter APK output directories ==="
-          find . -type d -name "flutter-apk" 2>/dev/null | head -10 || echo "No flutter-apk directory found"
-          echo "=== Recent files in /tmp ==="
-          find /tmp -type f -newermt "1 hour ago" 2>/dev/null | head -20 || echo "No recent files in /tmp"
+          echo "=== Files under workspace ==="
+          find . -type f 2>/dev/null | head -200 || echo "No files under workspace"
+          echo "=== APK/AAB files anywhere ==="
+          find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No APK files"
+          find / -name "*.aab" -type f 2>/dev/null | head -10 || echo "No AAB files"
+          echo "=== Files under .dart_tool ==="
+          find .dart_tool -type f 2>/dev/null | head -20 || echo "No .dart_tool files"
+          echo "=== Flutter build cache ==="
+          ls -la ~/.flutter/ 2>/dev/null || echo "No .flutter dir"
+          find ~/.flutter -name "*.apk" -type f 2>/dev/null | head -10 || echo "No APK in .flutter"
 
       - name: Upload build output log (always)
         if: always()
@@ -79,12 +81,3 @@ jobs:
           name: build-output-log
           path: /tmp/build_output.txt
           retention-days: 30
-
-      - name: Upload build directory artifact (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rapport-plus-build-dir
-          path: build/
-          retention-days: 30
-          if-no-files-found: warn
