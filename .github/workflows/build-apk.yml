@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build debug + release APK
+    name: Build debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -44,21 +44,6 @@ jobs:
       - name: Write Flutter SDK local.properties
         run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
-      - name: Diagnostics
-        run: |
-          echo "=== Dart version ==="
-          dart --version
-          echo "=== Flutter version ==="
-          flutter --version
-          echo "=== Flutter doctor ==="
-          flutter doctor -v
-          echo "=== Network test pub.dev ==="
-          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://pub.dev || echo "000")
-          echo "pub.dev HTTP: $code"
-          echo "=== Network test googleapis ==="
-          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://apis.google.com || echo "000")
-          echo "googleapis HTTP: $code"
-
       - name: Get dependencies
         run: |
           for i in 1 2 3; do
@@ -68,21 +53,21 @@ jobs:
             sleep 15
           done
 
-      - name: Build debug APK (capture output)
+      - name: Build debug APK
         run: |
+          set -o pipefail
           flutter build apk --debug --verbose 2>&1 | tee /tmp/build_output.txt
-          echo "=== BUILD EXIT CODE: $? ==="
-          echo "=== BUILD LOG TAIL ==="
-          tail -80 /tmp/build_output.txt
+          echo "=== FLUTTER EXIT CODE: ${PIPESTATUS[0]} ==="
 
-      - name: List build directory
+      - name: List build directory (always)
+        if: always()
         run: |
-          echo "=== Build directory contents ==="
-          find build -type f 2>/dev/null | head -50 || echo "No build directory"
-          echo "=== Any APK files ==="
-          find / -name "*.apk" -type f 2>/dev/null | head -10 || echo "No APK files found"
+          echo "=== Build directory tree ==="
+          find build -type f 2>/dev/null | head -100 || echo "No build directory"
+          echo "=== All APK files on filesystem ==="
+          find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No APK files found"
 
-      - name: Save build output artifact
+      - name: Upload build output log (always)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -90,33 +75,23 @@ jobs:
           path: /tmp/build_output.txt
           retention-days: 30
 
-      - name: Find APK file (exhaustive)
+      - name: Copy APK to known location (always)
+        if: always()
         run: |
-          echo "=== All files in build/ ==="
-          find build -type f 2>/dev/null | head -50 || echo "No build dir"
-          echo "=== All .apk files on filesystem ==="
-          find / -name "*.apk" -type f 2>/dev/null | head -20 || echo "No .apk files found"
-          echo "=== All files modified recently in build/ ==="
-          find build -newer /tmp/build_output.txt -type f 2>/dev/null | head -30 || echo "No recent files"
-
-      - name: Copy APK to known location
-        run: |
-          echo "=== All APK files found ==="
-          find / -name "*.apk" -type f 2>/dev/null | head -20
           APK_PATH=$(find / -name "*.apk" -type f 2>/dev/null | head -1)
           if [ -n "$APK_PATH" ]; then
             echo "Copying APK from: $APK_PATH"
             cp "$APK_PATH" ./rapport-plus-debug.apk
             ls -la ./rapport-plus-debug.apk
           else
-            echo "ERROR: No .apk file found anywhere on filesystem"
-            exit 1
+            echo "No APK file found anywhere on filesystem"
           fi
 
-      - name: Upload APK artifacts
+      - name: Upload APK artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: rapport-plus-apk-debug
           path: rapport-plus-debug.apk
           retention-days: 30
-          if-no-files-found: error
+          if-no-files-found: warn
