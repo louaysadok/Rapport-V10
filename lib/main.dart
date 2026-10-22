@@ -1,34 +1,30 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+import 'app.dart';
+import 'app_state.dart';
+import 'routes.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Rapport+',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(),
-    );
-  }
-}
+  final prefs = await SharedPreferences.getInstance();
+  appDatabase = await openAppDatabase();
+  await appDatabase.init();
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
+  // Notifications locales : rappel quotidien à 18:00 heure locale.
+  await notificationService.init();
+  await notificationService.scheduleDailyReminder();
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('Rapport+ - Building...'),
-      ),
-    );
-  }
+  runApp(
+    ProviderScope(
+      overrides: [
+        prefsProvider.overrideWithValue(prefs),
+      ],
+      child: const RapportApp(),
+    ),
+  );
 }
